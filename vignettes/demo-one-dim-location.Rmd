@@ -17,6 +17,10 @@ knitr::opts_chunk$set(
   comment = "#>",
   tidy = "styler"
 )
+gifski_available <- requireNamespace("gifski", quietly = TRUE)
+if (gifski_available) {
+  knitr::opts_chunk$set(animation.hook = "gifski")
+}
 ```
 
 ## Objective
@@ -31,9 +35,10 @@ library(SpatPCA)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-library(gifski)
 base_theme <- theme_classic(base_size = 18, base_family = "Times")
 ```
+Animated figures are produced when the optional `gifski` package is available;
+otherwise static summaries are shown for the corresponding chunks.
 #### True spatial pattern (eigenfunction)
 The underlying spatial pattern below indicates realizations will vary dramatically at the center and be almost unchanged at the both ends of the curve.
 ```{r}
@@ -60,9 +65,14 @@ realizations <- rnorm(n = 100, sd = 20) %*% t(true_eigen_fn) + matrix(rnorm(n = 
 
 #### Animate realizations
 We can see simulated central realizations change in a wide range more frequently than the others.
-```{r, animation.hook="gifski"}
-for (i in 1:100) {
-  plot(x = position, y = realizations[i, ], ylim = c(-10, 10), ylab = "realization")
+```{r}
+if (gifski_available) {
+  for (i in 1:100) {
+    plot(x = position, y = realizations[i, ], ylim = c(-10, 10), ylab = "realization")
+  }
+} else {
+  matplot(t(realizations[1:10, ]), type = "l", lty = 1, ylim = c(-10, 10),
+          xlab = "position index", ylab = "realization")
 }
 ```
 
@@ -94,9 +104,14 @@ realizations <- rnorm(n = 100, sd = 3) %*% t(true_eigen_fn) + matrix(rnorm(n = 1
 
 ### Animate realizations
 It is hard to see a crystal clear spatial pattern via the simulated sample shown below.
-```{r, animation.hook="gifski"}
-for (i in 1:100) {
-  plot(x = position, y = realizations[i, ], ylim = c(-10, 10), ylab = "realization")
+```{r}
+if (gifski_available) {
+  for (i in 1:100) {
+    plot(x = position, y = realizations[i, ], ylim = c(-10, 10), ylab = "realization")
+  }
+} else {
+  matplot(t(realizations[1:10, ]), type = "l", lty = 1, ylim = c(-10, 10),
+          xlab = "position index", ylab = "realization")
 }
 ```
 

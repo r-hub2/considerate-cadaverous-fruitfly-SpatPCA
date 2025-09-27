@@ -26,8 +26,8 @@ Depends: R (>= 3.4.0)
 Imports: Rcpp (>= 1.0.12), RcppParallel (>= 5.1.7), ggplot2
 LinkingTo: Rcpp, RcppArmadillo, RcppParallel
 Suggests: knitr, rmarkdown, testthat (>= 2.1.0), dplyr (>= 1.0.3),
-        gifski, tidyr, fields, scico, plot3D, pracma, RColorBrewer,
-        maps, covr, styler, V8
+        tidyr, fields, scico, plot3D, pracma, RColorBrewer, maps, covr,
+        styler, V8
 SystemRequirements: GNU make
 VignetteBuilder: knitr
 Encoding: UTF-8
@@ -37,7 +37,7 @@ URL: https://egpivo.github.io/SpatPCA/,
         https://github.com/egpivo/SpatPCA
 Config/testthat/edition: 3
 NeedsCompilation: yes
-Packaged: 2025-09-27 17:38:30 UTC; joseph
+Packaged: 2025-09-27 18:21:48 UTC; joseph
 Author: Wen-Ting Wang [aut, cre] (ORCID:
     <https://orcid.org/0000-0003-3051-7302>),
   Hsin-Cheng Huang [aut] (ORCID: <https://orcid.org/0000-0002-5613-349X>)

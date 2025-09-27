@@ -6,13 +6,16 @@ knitr::opts_chunk$set(
   dpi = 300,
   tidy = "styler"
 )
+gifski_available <- requireNamespace("gifski", quietly = TRUE)
+if (gifski_available) {
+  knitr::opts_chunk$set(animation.hook = "gifski")
+}
 
 ## ----message=FALSE------------------------------------------------------------
 library(SpatPCA)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-library(gifski)
 library(fields)
 library(scico)
 
@@ -54,20 +57,35 @@ data.frame(
 ## -----------------------------------------------------------------------------
 realizations <- rnorm(n = n, sd = 3) %*% t(true_eigen_fn) + matrix(rnorm(n = n * p^2), n, p^2)
 
-## ----animation.hook="gifski", out.width = '100%'------------------------------
+## ----out.width = '100%'-------------------------------------------------------
 original_par <- par()
-for (i in 1:n) {
+if (gifski_available) {
+  for (i in 1:n) {
+    par(mar = c(3, 3, 1, 1), family = "Times")
+    image.plot(
+      matrix(realizations[i, ], p, p),
+      main = paste0(i, "-th realization"),
+      zlim = c(-10, 10),
+      col = coltab,
+      horizontal = TRUE,
+      cex.main = 0.8,
+      cex.axis = 0.5,
+      axis.args = list(cex.axis = 0.5),
+      legend.width = 0.5
+    )
+  }
+} else {
   par(mar = c(3, 3, 1, 1), family = "Times")
   image.plot(
-    matrix(realizations[i, ], p, p),
-    main = paste0(i, "-th realization"),
+    matrix(realizations[1, ], p, p),
+    main = "1st realization",
     zlim = c(-10, 10),
     col = coltab,
     horizontal = TRUE,
     cex.main = 0.8,
     cex.axis = 0.5,
-    axis.args=list(cex.axis=0.5),
-    legend.width=0.5
+    axis.args = list(cex.axis = 0.5),
+    legend.width = 0.5
   )
 }
 par(original_par)
