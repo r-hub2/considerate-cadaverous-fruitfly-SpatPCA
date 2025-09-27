@@ -597,7 +597,8 @@ List spatpcaCV(
   if(tau1.n_elem > 1) {  
     spatpcaCVPhi spatpcaCVPhi(Y, K, Omega, tau1, nk, maxit, tol, cv, gram_matrix_Y_train, Phi_cv, Lambd2_cv, rho_cv);
     RcppParallel::parallelFor(0, M, spatpcaCVPhi);
-    (sum(cv, 0)).min(index1);
+    rowvec cv_sum = sum(cv, 0);
+    index1 = cv_sum.index_min();
     selected_tau1 = tau1[index1];  
     if(index1 > 0)
       estimated_Phi = spatpcaCore2p(gram_matrix_Y, estimated_C, estimated_Lambda2, Omega, selected_tau1, estimated_rho, maxit, tol);
@@ -658,7 +659,8 @@ List spatpcaCV(
     spatpcaCVPhi2 spatpcaCVPhi2(Y, gram_matrix_Y_train, Phi_cv, Lambd2_cv, rho_cv, K, selected_tau1, Omega, tau2, nk, maxit, tol, cv2, tempinv_cv); 
     RcppParallel::parallelFor(0, M, spatpcaCVPhi2);
 
-    (sum(cv2, 0)).min(index2);
+    rowvec cv2_sum = sum(cv2, 0);
+    index2 = cv2_sum.index_min();
     selected_tau2 = tau2[index2];
 
     mat tempinv = inv_sympd((selected_tau1 * Omega) - gram_matrix_Y + (estimated_rho * Ip));
@@ -685,7 +687,8 @@ List spatpcaCV(
   spatpcaCVPhi3 spatpcaCVPhi3(Y, gram_matrix_Y_train, Phi_cv, Lambd2_cv, rho_cv, tempinv_cv, index2, K, Omega, selected_tau1, tau2, gamma, nk, maxit, tol, cv3);
   RcppParallel::parallelFor(0, M, spatpcaCVPhi3);
   if(gamma.n_elem > 1) {
-    (sum(cv3, 0)).min(index3);
+    rowvec cv3_sum = sum(cv3, 0);
+    index3 = cv3_sum.index_min();
     selected_gamma = gamma[index3];
   }
   else {

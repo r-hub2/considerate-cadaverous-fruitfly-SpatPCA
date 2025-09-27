@@ -53,13 +53,19 @@ summarise_rhub_jobs <- function(submissions) {
                       repo_url = character(), stringsAsFactors = FALSE))
   }
 
-  if (!is.list(submissions)) {
-    stop("Expected a list returned by run_rhub_checks().")
+  to_list <- function(x) {
+    if (is.null(x)) {
+      list()
+    } else if (is.list(x) && !is.null(names(x)) && all(c("result", "name", "id") %in% names(x))) {
+      list(x)
+    } else if (is.list(x)) {
+      x
+    } else {
+      stop("Expected a submission or list of submissions from run_rhub_checks().")
+    }
   }
 
-  if (!is.null(submissions$result) || !is.null(submissions$actions_url)) {
-    submissions <- list(submissions)
-  }
+  submissions <- to_list(submissions)
 
   extract_field <- function(x, field) {
     value <- x[[field]]
