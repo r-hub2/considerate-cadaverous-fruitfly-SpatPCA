@@ -163,7 +163,7 @@ void spatpcaCore2(
   vec error(2), S;
   Ip.eye(p,p);
   Sigtau1 = tau1 * Omega - gram_matrix_Y;
-  tempinv = inv_sympd(2 * Sigtau1 + rho * Ip);
+  tempinv = inv_sympd(symmatu(2 * Sigtau1 + rho * Ip));
 
   for(iter = 0; iter < maxit; iter++) {
     Phi = tempinv * ((rho * Cold) - Lambda2old);
@@ -201,7 +201,7 @@ mat spatpcaCore2p(
   Ip.eye(p, p);
   Sigtau1 = tau1 * Omega - gram_matrix_Y;
   
-  tempinv = inv_sympd(2 * Sigtau1 + rho * Ip);
+  tempinv = inv_sympd(symmatu(2 * Sigtau1 + rho * Ip));
   for(iter = 0; iter < maxit; iter++) {
     Phi = tempinv * ((rho * Cold) - Lambda2old);
     temp = Phi + (Lambda2old / rho);
@@ -396,7 +396,7 @@ struct spatpcaCVPhi2: public RcppParallel::Worker {
       R = Phi;
       Phi_cv.slice(k) = Phi;
       Lambd2_cv.slice(k) = Lambda2;
-      tempinv.slice(k) = inv_sympd((tau1 * Omega) - gram_matrix_Y_train.slice(k) + (rho(k, 0) * Ip));
+      tempinv.slice(k) = inv_sympd(symmatu((tau1 * Omega) - gram_matrix_Y_train.slice(k) + (rho(k, 0) * Ip)));
       for(uword i = 0; i < tau2.n_elem; i++) {
         spatpcaCore3(tempinv.slice(k), Phi, R, C, Lambda1, Lambda2, tau2[i], rho(k, 0), maxit, tol);
         output(k, i) = pow(norm(Y_validation * (Ip - Phi * Phi.t()), "fro"), 2.0); 
@@ -623,7 +623,7 @@ List spatpcaCV(
         spatpcaCore2(gram_matrix_Y_train.slice(k), Phigg,Cgg, Lambda2gg, Omega, selected_tau1, rho_cv(k, 0), maxit, tol);
         Phi_cv.slice(k) = Phigg;
         Lambd2_cv.slice(k) = Lambda2gg;
-        tempinv_cv.slice(k) = inv_sympd((selected_tau1 * Omega) - gram_matrix_Y_train.slice(k) + (rho_cv(k, 0) * Ip));    
+        tempinv_cv.slice(k) = inv_sympd(symmatu((selected_tau1 * Omega) - gram_matrix_Y_train.slice(k) + (rho_cv(k, 0) * Ip)));
       }
     }
     else if(selected_tau1 == 0 && max(tau2) == 0) {
@@ -663,7 +663,7 @@ List spatpcaCV(
     index2 = cv2_sum.index_min();
     selected_tau2 = tau2[index2];
 
-    mat tempinv = inv_sympd((selected_tau1 * Omega) - gram_matrix_Y + (estimated_rho * Ip));
+    mat tempinv = inv_sympd(symmatu((selected_tau1 * Omega) - gram_matrix_Y + (estimated_rho * Ip)));
     mat estimated_R = estimated_Phi;
     mat estimated_Lambda1 = 0 * estimated_Phi;
 
@@ -675,7 +675,7 @@ List spatpcaCV(
   else {  
     selected_tau2 = max(tau2);
     if(selected_tau2 > 0) {
-      mat tempinv = inv_sympd((selected_tau1 * Omega) - gram_matrix_Y + (estimated_rho * Ip));
+      mat tempinv = inv_sympd(symmatu((selected_tau1 * Omega) - gram_matrix_Y + (estimated_rho * Ip)));
       mat estimated_R= estimated_Phi;
       mat estimated_Lambda1 = 0 * estimated_Phi;
       for(uword i = 0; i < l2.n_elem; i++)
