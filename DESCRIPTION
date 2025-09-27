@@ -23,8 +23,8 @@ License: GPL (>= 2)
 ByteCompile: true
 BugReports: https://github.com/egpivo/SpatPCA/issues
 Depends: R (>= 3.4.0)
-Imports: Rcpp (>= 1.0.12), RcppParallel (>= 5.1.7), ggplot2
-LinkingTo: Rcpp, RcppArmadillo, RcppParallel
+Imports: Rcpp (>= 1.0.12), ggplot2, parallel
+LinkingTo: Rcpp, RcppArmadillo
 Suggests: knitr, rmarkdown, testthat (>= 2.1.0), dplyr (>= 1.0.3),
         tidyr, fields, scico, plot3D, pracma, RColorBrewer, maps, covr,
         styler, V8
@@ -37,7 +37,7 @@ URL: https://egpivo.github.io/SpatPCA/,
         https://github.com/egpivo/SpatPCA
 Config/testthat/edition: 3
 NeedsCompilation: yes
-Packaged: 2025-09-27 18:41:53 UTC; joseph
+Packaged: 2025-09-27 19:19:20 UTC; joseph
 Author: Wen-Ting Wang [aut, cre] (ORCID:
     <https://orcid.org/0000-0003-3051-7302>),
   Hsin-Cheng Huang [aut] (ORCID: <https://orcid.org/0000-0002-5613-349X>)

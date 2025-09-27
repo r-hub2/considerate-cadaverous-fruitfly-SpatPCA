@@ -1,18 +1,15 @@
 // includes from the plugin
-// [[Rcpp::depends(RcppParallel)]]
 // [[Rcpp::depends(RcppArmadillo)]]
-#include <RcppParallel.h>
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
 #include <iostream>
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(cpp17)]]                                        
+// [[Rcpp::plugins(cpp17)]]
 
 using namespace Rcpp;
 using namespace std;
 using namespace arma;
 
-struct thinPlateSpline: public RcppParallel::Worker {
+struct thinPlateSpline {
   const mat& P;
   mat& L;  
   int p;
@@ -66,7 +63,7 @@ arma::mat thinPlateSplineMatrix(const arma::mat location) {
   L.zeros(total_size + 1, total_size + 1);
   Ip.eye(total_size + 1, total_size + 1);
   thinPlateSpline thin_plate_spline(location, L, p, d);
-  parallelFor(0, p, thin_plate_spline);
+  thin_plate_spline(0, p);
   L = symmatu(L);
   Lp = inv(L + 1e-8 * Ip);   
   Lp.shed_cols(p, total_size);
@@ -99,7 +96,7 @@ arma::mat eigenFunction(const arma::mat new_location, const arma::mat original_l
   int total_size = p + d;
   L.zeros(total_size + 1, total_size + 1);
   thinPlateSpline thin_plate_spline(original_location, L, p, d);
-  parallelFor(0, p, thin_plate_spline);
+  thin_plate_spline(0, p);
   L = L + L.t();
   
   mat Phi_star, para(total_size + 1, K);
@@ -271,7 +268,7 @@ void spatpcaCore3(
   iter++;
 }
 
-struct spatpcaCVPhi: public RcppParallel::Worker {
+struct spatpcaCVPhi {
   const mat& Y;
   int K;
   const mat& Omega;
@@ -336,7 +333,7 @@ struct spatpcaCVPhi: public RcppParallel::Worker {
   }
 };
 
-struct spatpcaCVPhi2: public RcppParallel::Worker {
+struct spatpcaCVPhi2 {
   const mat& Y;
   const cube& gram_matrix_Y_train;
   cube& Phi_cv;
@@ -405,7 +402,7 @@ struct spatpcaCVPhi2: public RcppParallel::Worker {
   }
 };
 
-struct spatpcaCVPhi3: public RcppParallel::Worker {
+struct spatpcaCVPhi3 {
   const mat& Y;
   const cube& gram_matrix_Y_train;
   const cube& Phi_cv;
@@ -595,8 +592,8 @@ List spatpcaCV(
   }
 
   if(tau1.n_elem > 1) {  
-    spatpcaCVPhi spatpcaCVPhi(Y, K, Omega, tau1, nk, maxit, tol, cv, gram_matrix_Y_train, Phi_cv, Lambd2_cv, rho_cv);
-    RcppParallel::parallelFor(0, M, spatpcaCVPhi);
+    spatpcaCVPhi worker(Y, K, Omega, tau1, nk, maxit, tol, cv, gram_matrix_Y_train, Phi_cv, Lambd2_cv, rho_cv);
+    worker(0, M);
     rowvec cv_sum = sum(cv, 0);
     index1 = cv_sum.index_min();
     selected_tau1 = tau1[index1];  
@@ -656,8 +653,8 @@ List spatpcaCV(
   
   if(tau2.n_elem > 1) {
     mat cv2(M, tau2.n_elem);
-    spatpcaCVPhi2 spatpcaCVPhi2(Y, gram_matrix_Y_train, Phi_cv, Lambd2_cv, rho_cv, K, selected_tau1, Omega, tau2, nk, maxit, tol, cv2, tempinv_cv); 
-    RcppParallel::parallelFor(0, M, spatpcaCVPhi2);
+    spatpcaCVPhi2 worker2(Y, gram_matrix_Y_train, Phi_cv, Lambd2_cv, rho_cv, K, selected_tau1, Omega, tau2, nk, maxit, tol, cv2, tempinv_cv);
+    worker2(0, M);
 
     rowvec cv2_sum = sum(cv2, 0);
     index2 = cv2_sum.index_min();
@@ -684,8 +681,8 @@ List spatpcaCV(
     cv_score_tau2.zeros(1);
   }
   
-  spatpcaCVPhi3 spatpcaCVPhi3(Y, gram_matrix_Y_train, Phi_cv, Lambd2_cv, rho_cv, tempinv_cv, index2, K, Omega, selected_tau1, tau2, gamma, nk, maxit, tol, cv3);
-  RcppParallel::parallelFor(0, M, spatpcaCVPhi3);
+  spatpcaCVPhi3 worker3(Y, gram_matrix_Y_train, Phi_cv, Lambd2_cv, rho_cv, tempinv_cv, index2, K, Omega, selected_tau1, tau2, gamma, nk, maxit, tol, cv3);
+  worker3(0, M);
   if(gamma.n_elem > 1) {
     rowvec cv3_sum = sum(cv3, 0);
     index3 = cv3_sum.index_min();

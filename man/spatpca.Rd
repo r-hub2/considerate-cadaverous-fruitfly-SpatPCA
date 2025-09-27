@@ -42,7 +42,7 @@ spatpca(
 
 \item{thr}{Threshold for convergence. Default value is \eqn{10^{-4}}.}
 
-\item{num_cores}{Number of cores used to parallel computing. Default value is NULL (See \code{RcppParallel::defaultNumThreads()})}
+\item{num_cores}{Optional numeric value indicating desired cores. The request is validated but computations run sequentially. Default value is NULL.}
 }
 \value{
 A list of objects including
@@ -69,13 +69,13 @@ An ADMM form of the proposed objective function is written as
 \eqn{\mbox{subject to $ \mathbf{\Phi}^T\mathbf{\Phi}=\mathbf{I}_K$,}} where \eqn{\mathbf{Y}} is a data matrix, \eqn{{\mathbf{\Omega}}} is a smoothness matrix, and \eqn{\mathbf{\Phi}=\{\phi_{jk}\}}.
 }
 \examples{
-# The following examples only use two threads for parallel computing.
+# The following examples run sequentially.
 ## 1D: regular locations
 x_1D <- as.matrix(seq(-5, 5, length = 50))
 Phi_1D <- exp(-x_1D^2) / norm(exp(-x_1D^2), "F")
 set.seed(1234)
 Y_1D <- rnorm(n = 100, sd = 3) \%*\% t(Phi_1D) + matrix(rnorm(n = 100 * 50), 100, 50)
-cv_1D <- spatpca(x = x_1D, Y = Y_1D, num_cores = 2)
+cv_1D <- spatpca(x = x_1D, Y = Y_1D)
 plot(x_1D, cv_1D$eigenfn[, 1], type = "l", main = "1st eigenfunction")
 lines(x_1D, svd(Y_1D)$v[, 1], col = "red")
 legend("topleft", c("SpatPCA", "PCA"), lty = 1:1, col = 1:2)
