@@ -4,10 +4,6 @@ knitr::opts_chunk$set(
   comment = "#>",
   tidy = "styler"
 )
-gifski_available <- requireNamespace("gifski", quietly = TRUE)
-if (gifski_available) {
-  knitr::opts_chunk$set(animation.hook = "gifski")
-}
 
 ## ----message=FALSE------------------------------------------------------------
 library(SpatPCA)
@@ -31,14 +27,12 @@ data.frame(position = position,
 realizations <- rnorm(n = 100, sd = 20) %*% t(true_eigen_fn) + matrix(rnorm(n = 100 * 100), 100, 100)
 
 ## -----------------------------------------------------------------------------
-if (gifski_available) {
-  for (i in 1:100) {
-    plot(x = position, y = realizations[i, ], ylim = c(-10, 10), ylab = "realization")
-  }
-} else {
-  matplot(t(realizations[1:10, ]), type = "l", lty = 1, ylim = c(-10, 10),
-          xlab = "position index", ylab = "realization")
-}
+subset_idx <- seq(1, 100, length.out = 9)
+matplot(
+  t(realizations[subset_idx, ]), type = "l", lty = 1,
+  ylim = c(-10, 10),
+  xlab = "position index", ylab = "realization"
+)
 
 ## -----------------------------------------------------------------------------
 cv <- spatpca(x = position, Y = realizations)
@@ -58,14 +52,12 @@ data.frame(position = position,
 realizations <- rnorm(n = 100, sd = 3) %*% t(true_eigen_fn) + matrix(rnorm(n = 100 * 100), 100, 100)
 
 ## -----------------------------------------------------------------------------
-if (gifski_available) {
-  for (i in 1:100) {
-    plot(x = position, y = realizations[i, ], ylim = c(-10, 10), ylab = "realization")
-  }
-} else {
-  matplot(t(realizations[1:10, ]), type = "l", lty = 1, ylim = c(-10, 10),
-          xlab = "position index", ylab = "realization")
-}
+subset_idx <- seq(1, 100, length.out = 9)
+matplot(
+  t(realizations[subset_idx, ]), type = "l", lty = 1,
+  ylim = c(-10, 10),
+  xlab = "position index", ylab = "realization"
+)
 
 ## -----------------------------------------------------------------------------
 cv <- spatpca(x = position, Y = realizations)
