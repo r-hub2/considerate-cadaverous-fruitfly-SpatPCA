@@ -9,7 +9,6 @@ knitr::opts_chunk$set(
 ## ----message=FALSE------------------------------------------------------------
 library(SpatPCA)
 library(ggplot2)
-library(scico)
 
 base_theme <- theme_minimal(base_size = 10, base_family = "Times") +
   theme(legend.position = "bottom")
@@ -18,7 +17,10 @@ fill_bar <- guides(fill = guide_colourbar(
     barheight = 0.5,
     label.position = "bottom")
   )
-coltab <- scico(128, palette = 'vik')
+coltab <- with(
+  list(),
+  colorRampPalette(c("#3b4cc0", "#f7f7f7", "#b40426"))(128)
+)
 color_scale_limit <- c(-.8, .8)
 
 ## ----out.width = '100%'-------------------------------------------------------
