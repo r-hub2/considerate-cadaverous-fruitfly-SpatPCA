@@ -3,15 +3,12 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.align = "center",
-  dpi = 300,
-  tidy = "styler"
+  dpi = 300
 )
 
 ## ----message=FALSE------------------------------------------------------------
 library(SpatPCA)
 library(ggplot2)
-library(dplyr)
-library(tidyr)
 library(scico)
 
 base_theme <- theme_minimal(base_size = 10, base_family = "Times") +
@@ -36,13 +33,14 @@ unnormalized_eigen_fn <-
 true_eigen_fn <-
   unnormalized_eigen_fn / norm(t(unnormalized_eigen_fn), "F")
 
-data.frame(
+plot_df <- data.frame(
   location_dim1 = expanded_location[, 1],
   location_dim2 = expanded_location[, 2],
   eigenfunction = true_eigen_fn
-) %>%
-  ggplot(aes(location_dim1, location_dim2)) +
-  geom_tile(aes(fill = eigenfunction))  +
+)
+
+ggplot(plot_df, aes(location_dim1, location_dim2)) +
+  geom_tile(aes(fill = eigenfunction)) +
   scale_fill_gradientn(colours = coltab, limits = color_scale_limit) +
   base_theme +
   labs(title = "True Eigenfunction", fill = "") +
@@ -72,17 +70,29 @@ cv <- spatpca(x = expanded_location, Y = realizations, tau2 = tau2)
 eigen_est <- cv$eigenfn
 
 ## ----out.width = '100%'-------------------------------------------------------
-data.frame(
+plot_df <- data.frame(
   location_dim1 = expanded_location[, 1],
   location_dim2 = expanded_location[, 2],
-  spatpca = eigen_est[, 1], 
-  pca = svd(realizations)$v[, 1]) %>%
-  gather(estimate, eigenfunction, -c(location_dim1, location_dim2)) %>%
-  ggplot(aes(location_dim1, location_dim2)) +
-  geom_tile(aes(fill=eigenfunction))  +
+  spatpca = eigen_est[, 1],
+  pca = svd(realizations)$v[, 1]
+)
+
+plot_df_long <- rbind(
+  data.frame(location_dim1 = plot_df$location_dim1,
+             location_dim2 = plot_df$location_dim2,
+             estimate = "spatpca",
+             eigenfunction = plot_df$spatpca),
+  data.frame(location_dim1 = plot_df$location_dim1,
+             location_dim2 = plot_df$location_dim2,
+             estimate = "pca",
+             eigenfunction = plot_df$pca)
+)
+
+ggplot(plot_df_long, aes(location_dim1, location_dim2)) +
+  geom_tile(aes(fill = eigenfunction)) +
   scale_fill_gradientn(colours = coltab, limits = color_scale_limit) +
   base_theme +
-  facet_wrap(.~estimate) +
+  facet_wrap(~estimate) +
   labs(fill = "") +
   fill_bar
 

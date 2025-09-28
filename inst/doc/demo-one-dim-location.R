@@ -1,15 +1,12 @@
 ## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>",
-  tidy = "styler"
+  comment = "#>"
 )
 
 ## ----message=FALSE------------------------------------------------------------
 library(SpatPCA)
 library(ggplot2)
-library(dplyr)
-library(tidyr)
 base_theme <- theme_classic(base_size = 18, base_family = "Times")
 
 ## -----------------------------------------------------------------------------
@@ -17,9 +14,9 @@ set.seed(1024)
 position <- matrix(seq(-5, 5, length = 100))
 true_eigen_fn <- exp(-position^2) / norm(exp(-position^2), "F")
 
-data.frame(position = position,
-           eigenfunction = true_eigen_fn) %>%
-  ggplot(aes(position, eigenfunction)) +
+plot_df <- data.frame(position = position, eigenfunction = true_eigen_fn)
+
+ggplot(plot_df, aes(position, eigenfunction)) +
   geom_line() +
   base_theme
 
@@ -39,13 +36,21 @@ cv <- spatpca(x = position, Y = realizations)
 eigen_est <- cv$eigenfn
 
 ## -----------------------------------------------------------------------------
-data.frame(position = position, 
-           true = true_eigen_fn, 
-           spatpca = eigen_est[, 1], 
-           pca = svd(realizations)$v[, 1]) %>%
-  gather(estimate, eigenfunction, -position) %>%
-  ggplot(aes(x = position, y = eigenfunction, color = estimate)) +
-  geom_line() + 
+plot_df <- data.frame(
+  position = position,
+  true = true_eigen_fn,
+  spatpca = eigen_est[, 1],
+  pca = svd(realizations)$v[, 1]
+)
+
+plot_df_long <- data.frame(
+  position = rep(plot_df$position, 3),
+  estimate = rep(c("true", "spatpca", "pca"), each = nrow(plot_df)),
+  eigenfunction = c(plot_df$true, plot_df$spatpca, plot_df$pca)
+)
+
+ggplot(plot_df_long, aes(x = position, y = eigenfunction, color = estimate)) +
+  geom_line() +
   base_theme
 
 ## -----------------------------------------------------------------------------
@@ -63,12 +68,20 @@ matplot(
 cv <- spatpca(x = position, Y = realizations)
 eigen_est <- cv$eigenfn
 
-data.frame(position = position, 
-           true = true_eigen_fn, 
-           spatpca = eigen_est[, 1], 
-           pca = svd(realizations)$v[, 1]) %>%
-  gather(estimate, eigenfunction, -position) %>%
-  ggplot(aes(x = position, y = eigenfunction, color = estimate)) +
-  geom_line() + 
+plot_df <- data.frame(
+  position = position,
+  true = true_eigen_fn,
+  spatpca = eigen_est[, 1],
+  pca = svd(realizations)$v[, 1]
+)
+
+plot_df_long <- data.frame(
+  position = rep(plot_df$position, 3),
+  estimate = rep(c("true", "spatpca", "pca"), each = nrow(plot_df)),
+  eigenfunction = c(plot_df$true, plot_df$spatpca, plot_df$pca)
+)
+
+ggplot(plot_df_long, aes(x = position, y = eigenfunction, color = estimate)) +
+  geom_line() +
   base_theme
 
