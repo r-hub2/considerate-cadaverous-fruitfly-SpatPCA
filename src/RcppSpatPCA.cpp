@@ -222,53 +222,51 @@ mat spatpcaCore2p(
 }
 
 void spatpcaCore3(
-    const mat tempinv,
-    mat& Phi,
-    mat& R,
-    mat& C,
-    mat& Lambda1,
-    mat& Lambda2,
+    const arma::mat tempinv,
+    arma::mat& Phi,
+    arma::mat& R,
+    arma::mat& C,
+    arma::mat& Lambda1,
+    arma::mat& Lambda2,
     const double tau2,
     double rho,
     const int maxit,
     const double tol) {
-  int p = Phi.n_rows, K = Phi.n_cols, iter = 0;
-  mat temp, scaled_tau2, zero, one, U, V, difference_Phi_R, difference_Phi_C;
-  mat Phi_old = Phi, Rold = R, Cold = C, Lambda1old = Lambda1, Lambda2old = Lambda2;
-  vec S;
-  vec err(4, fill::zeros);
   
-  zero.zeros(p, K);
-  one.ones(p, K);
-  scaled_tau2 = tau2 * one / rho;
+  const int p = Phi.n_rows, K = Phi.n_cols;
+  arma::mat temp, U, V, difference_Phi_R, difference_Phi_C;
+  arma::mat Rold = R, Cold = C, Lambda1old = Lambda1, Lambda2old = Lambda2;
+  arma::vec S;
+  arma::vec err(4, arma::fill::zeros); // indices 0..3
   
+  const arma::mat zero(p, K, arma::fill::zeros);
+  const arma::mat one (p, K, arma::fill::ones);
+  const arma::mat scaled_tau2 = (tau2 / rho) * one;
   
-  for(iter = 0; iter < maxit; iter++) {
+  for (int iter = 0; iter < maxit; ++iter) {
     Phi = 0.5 * tempinv * (rho * (Rold + Cold) - (Lambda1old + Lambda2old));
-    R = sign(((Lambda1old / rho) + Phi)) % max(zero, abs(((Lambda1old / rho) + Phi)) - scaled_tau2);
+    R   = arma::sign(Lambda1old / rho + Phi) %
+      arma::max(zero, arma::abs(Lambda1old / rho + Phi) - scaled_tau2);
+    
     temp = Phi + Lambda2old / rho;
-    svd_econ(U, S, V, temp);
+    arma::svd_econ(U, S, V, temp);
     C = U.cols(0, V.n_cols - 1) * V.t();
+    
     difference_Phi_R = Phi - R;
-    difference_Phi_C = Phi - C;    
+    difference_Phi_C = Phi - C;
     Lambda1 = Lambda1old + rho * difference_Phi_R;
     Lambda2 = Lambda2old + rho * difference_Phi_C;
     
-    err[0] = norm(difference_Phi_R, "fro") / std::sqrt(double(p * K));
-    err[1] = norm(R - Rold,         "fro") / std::sqrt(double(p * K));
-    err[2] = norm(difference_Phi_C, "fro") / std::sqrt(double(p * K));
-    err[3] = norm(C - Cold,         "fro") / std::sqrt(double(p * K));
+    const double denom = std::sqrt(double(p) * double(K));
+    err[0] = arma::norm(difference_Phi_R, "fro") / denom;
+    err[1] = arma::norm(R - Rold,         "fro") / denom;
+    err[2] = arma::norm(difference_Phi_C, "fro") / denom;
+    err[3] = arma::norm(C - Cold,         "fro") / denom;
     
-    if (err.max() <= tol)
-      break;
-    Phi_old = Phi;
-    Rold = R;
-    Cold = C;
-    Lambda1old = Lambda1;
-    Lambda2old = Lambda2;
+    if (err.max() <= tol) break;
+    
+    Rold = R; Cold = C; Lambda1old = Lambda1; Lambda2old = Lambda2;
   }
-  
-  iter++;
 }
 
 struct spatpcaCVPhi {
