@@ -82,41 +82,45 @@ legend("topleft", c("SpatPCA", "PCA"), lty = 1:1, col = 1:2)
 
 \donttest{
 ## 2D: Daily 8-hour ozone averages for sites in the Midwest (USA)
-library(fields)
-library(pracma)
-library(maps)
-data(ozone2)
-x <- ozone2$lon.lat
-Y <- ozone2$y
-date <- as.Date(ozone2$date, format = "\%y\%m\%d")
-rmna <- !colSums(is.na(Y))
-YY <- matrix(Y[, rmna], nrow = nrow(Y))
-YY <- detrend(YY, "linear")
-xx <- x[rmna, ]
-cv <- spatpca(x = xx, Y = YY)
-quilt.plot(xx, cv$eigenfn[, 1])
-map("state", xlim = range(xx[, 1]), ylim = range(xx[, 2]), add = TRUE)
-map.text("state", xlim = range(xx[, 1]), ylim = range(xx[, 2]), cex = 2, add = TRUE)
-plot(date, YY \%*\% cv$eigenfn[, 1], type = "l", ylab = "1st Principal Component")
-### new loactions
-new_p <- 200
-x_lon <- seq(min(xx[, 1]), max(xx[, 1]), length = new_p)
-x_lat <- seq(min(xx[, 2]), max(xx[, 2]), length = new_p)
-xx_new <- as.matrix(expand.grid(x = x_lon, y = x_lat))
-eof <- spatpca(x = xx,
-               Y = YY,
-               K = cv$selected_K,
-               tau1 = cv$selected_tau1,
-               tau2 = cv$selected_tau2)
-predicted_eof <- predictEigenfunction(eof, xx_new)
-quilt.plot(xx_new,
-           predicted_eof[,1],
-           nx = new_p,
-           ny = new_p,
-           xlab = "lon.",
-           ylab = "lat.")
-map("state", xlim = range(x_lon), ylim = range(x_lat), add = TRUE)
-map.text("state", xlim = range(x_lon), ylim = range(x_lat), cex = 2, add = TRUE)
+if (requireNamespace("fields", quietly = TRUE) &&
+    requireNamespace("pracma", quietly = TRUE) &&
+    requireNamespace("maps", quietly = TRUE)) {
+  library(fields)
+  library(pracma)
+  library(maps)
+  data(ozone2)
+  x <- ozone2$lon.lat
+  Y <- ozone2$y
+  date <- as.Date(ozone2$date, format = "\%y\%m\%d")
+  rmna <- !colSums(is.na(Y))
+  YY <- matrix(Y[, rmna], nrow = nrow(Y))
+  YY <- detrend(YY, "linear")
+  xx <- x[rmna, ]
+  cv <- spatpca(x = xx, Y = YY)
+  quilt.plot(xx, cv$eigenfn[, 1])
+  map("state", xlim = range(xx[, 1]), ylim = range(xx[, 2]), add = TRUE)
+  map.text("state", xlim = range(xx[, 1]), ylim = range(xx[, 2]), cex = 2, add = TRUE)
+  plot(date, YY \%*\% cv$eigenfn[, 1], type = "l", ylab = "1st Principal Component")
+  ### new locations
+  new_p <- 200
+  x_lon <- seq(min(xx[, 1]), max(xx[, 1]), length = new_p)
+  x_lat <- seq(min(xx[, 2]), max(xx[, 2]), length = new_p)
+  xx_new <- as.matrix(expand.grid(x = x_lon, y = x_lat))
+  eof <- spatpca(x = xx,
+                 Y = YY,
+                 K = cv$selected_K,
+                 tau1 = cv$selected_tau1,
+                 tau2 = cv$selected_tau2)
+  predicted_eof <- predictEigenfunction(eof, xx_new)
+  quilt.plot(xx_new,
+             predicted_eof[,1],
+             nx = new_p,
+             ny = new_p,
+             xlab = "lon.",
+             ylab = "lat.")
+  map("state", xlim = range(x_lon), ylim = range(x_lat), add = TRUE)
+  map.text("state", xlim = range(x_lon), ylim = range(x_lat), cex = 2, add = TRUE)
+}
 ## 3D: regular locations
 p <- 10
 x <- y <- z <- as.matrix(seq(-5, 5, length = p))
