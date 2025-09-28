@@ -56,22 +56,23 @@ struct thinPlateSpline {
 //' thin_plate_matrix <- thinPlateSplineMatrix(two_dim_location)
 // [[Rcpp::export]]
 arma::mat thinPlateSplineMatrix(const arma::mat location) {
-  int p = location.n_rows, d = location.n_cols;
-  int total_size = p + d;
-  mat L, Lp, Ip;
+  const int p = location.n_rows, d = location.n_cols;
+  const int total_size = p + d;
   
-  L.zeros(total_size + 1, total_size + 1);
-  Ip.eye(total_size + 1, total_size + 1);
+  mat L(total_size + 1, total_size + 1, fill::zeros);
+  const mat Ip(total_size + 1, total_size + 1, fill::eye);
+  
   thinPlateSpline thin_plate_spline(location, L, p, d);
   thin_plate_spline(0, p);
   L = symmatu(L);
-  Lp = inv(L + 1e-8 * Ip);   
+  
+  mat Lp = inv(L + 1e-8 * Ip);
   Lp.shed_cols(p, total_size);
   Lp.shed_rows(p, total_size);
   L.shed_cols(p, total_size);
   L.shed_rows(p, total_size);
-  mat result = Lp.t() * (L * Lp);
-  return(result);
+  
+  return Lp.t() * (L * Lp);
 }
 
 //' @title Interpolated Eigen-function
@@ -90,58 +91,59 @@ arma::mat thinPlateSplineMatrix(const arma::mat location) {
 //' Phi <- matrix(c(1, 0, 0, 0), nrow = 4, ncol = 1)
 //' thin_plate_matrix <- eigenFunction(new_location, original_location, Phi)
 // [[Rcpp::export]]
-arma::mat eigenFunction(const arma::mat new_location, const arma::mat original_location, const arma::mat Phi) {
-  mat L;
-  int p = original_location.n_rows, d = original_location.n_cols, K = Phi.n_cols;
-  int total_size = p + d;
-  L.zeros(total_size + 1, total_size + 1);
-  thinPlateSpline thin_plate_spline(original_location, L, p, d);
-  thin_plate_spline(0, p);
+arma::mat eigenFunction(const arma::mat new_location,
+                        const arma::mat original_location,
+                        const arma::mat Phi) {
+  const int p = original_location.n_rows, d = original_location.n_cols, K = Phi.n_cols;
+  const int total_size = p + d;
+  
+  mat L(total_size + 1, total_size + 1, fill::zeros);
+  thinPlateSpline tps(original_location, L, p, d);
+  tps(0, p);
   L = L + L.t();
   
-  mat Phi_star, para(total_size + 1, K);
-  Phi_star.zeros(total_size + 1, K);
+  mat Phi_star(total_size + 1, K, fill::zeros);
   Phi_star.rows(0, p - 1) = Phi;
-  para = solve(L, Phi_star);
-  int pnew = new_location.n_rows;
-  mat eigen_fn(pnew, K);
-  double psum, r;
-
-  for(int new_i = 0; new_i < pnew ; new_i++) {
-    for(int i = 0; i < K; i++) {
-      psum = 0;
-      for(int j = 0; j < p; j++) {
-        if(d == 1) {  
-          r = norm(new_location.row(new_i) - original_location.row(j), "f");
-          if(r != 0)
-            psum += para(j, i) * pow(r, 3) / 12;
-        }
-        else if(d == 2) {
-          r = sqrt(pow(new_location(new_i, 0) - original_location(j, 0), 2) + 
-            (pow(new_location(new_i, 1) - original_location(j, 1), 2)));
-          if(r != 0)
-            psum += para(j, i) * r * r * log(r) / (8.0 * datum::pi);
-        }
-        else if(d == 3) {
-          double r = sqrt(pow(new_location(new_i, 0) - original_location(j, 0), 2) +
-                          pow(new_location(new_i, 1) - original_location(j, 1), 2) +
-                          pow(new_location(new_i, 2) - original_location(j, 2), 2));
-          if(r != 0)
-            psum -= para(j, i) * r / (8.0 * datum::pi);
+  
+  mat para = solve(L, Phi_star);
+  
+  const int pnew = new_location.n_rows;
+  mat eigen_fn(pnew, K, fill::zeros);
+  
+  for (int new_i = 0; new_i < pnew ; ++new_i) {
+    for (int i = 0; i < K; ++i) {
+      double psum = 0.0;
+      for (int j = 0; j < p; ++j) {
+        double r = 0.0;
+        if (d == 1) {
+          r = std::abs(new_location(new_i, 0) - original_location(j, 0));
+          if (r > 0) psum += para(j, i) * (r * r * r) / 12.0;
+        } else if (d == 2) {
+          const double dx = new_location(new_i, 0) - original_location(j, 0);
+          const double dy = new_location(new_i, 1) - original_location(j, 1);
+          r = std::sqrt(dx*dx + dy*dy);
+          if (r > 0) psum += para(j, i) * r * r * std::log(r) / (8.0 * datum::pi);
+        } else if (d == 3) {
+          const double dx = new_location(new_i, 0) - original_location(j, 0);
+          const double dy = new_location(new_i, 1) - original_location(j, 1);
+          const double dz = new_location(new_i, 2) - original_location(j, 2);
+          r = std::sqrt(dx*dx + dy*dy + dz*dz);
+          if (r > 0) psum -= para(j, i) * r / (8.0 * datum::pi);
         }
       }
-      if(d == 1)
+      if (d == 1) {
         eigen_fn(new_i, i) = psum + para(p + 1, i) * new_location(new_i, 0) + para(p, i);
-      else if(d == 2)
-        eigen_fn(new_i, i) = psum + para(p + 1, i) * new_location(new_i, 0) +
-          para(p + 2, i) * new_location(new_i, 1) + para(p, i);
-      else if(d == 3)
-        eigen_fn(new_i, i) = psum + para(p + 1, i) * new_location(new_i, 0) +
-          para(p + 2, i) * new_location(new_i, 1) + para(p + 3, i) * new_location(new_i, 2) + para(p, i); 
+      } else if (d == 2) {
+        eigen_fn(new_i, i) = psum + para(p + 1, i) * new_location(new_i, 0)
+        + para(p + 2, i) * new_location(new_i, 1) + para(p, i);
+      } else { // d == 3
+        eigen_fn(new_i, i) = psum + para(p + 1, i) * new_location(new_i, 0)
+        + para(p + 2, i) * new_location(new_i, 1)
+        + para(p + 3, i) * new_location(new_i, 2) + para(p, i);
+      }
     }
   }
-  
-  return(eigen_fn);
+  return eigen_fn;
 }
 
 // user includes
@@ -233,7 +235,8 @@ void spatpcaCore3(
   int p = Phi.n_rows, K = Phi.n_cols, iter = 0;
   mat temp, scaled_tau2, zero, one, U, V, difference_Phi_R, difference_Phi_C;
   mat Phi_old = Phi, Rold = R, Cold = C, Lambda1old = Lambda1, Lambda2old = Lambda2;
-  vec error(4), S;
+  vec S;
+  vec err(4, fill::zeros);
   
   zero.zeros(p, K);
   one.ones(p, K);
@@ -251,12 +254,12 @@ void spatpcaCore3(
     Lambda1 = Lambda1old + rho * difference_Phi_R;
     Lambda2 = Lambda2old + rho * difference_Phi_C;
     
-    error[1] = norm(difference_Phi_R, "fro") / sqrt(p / 1.0);
-    error[2] = norm(R - Rold, "fro") / sqrt(p / 1.0);
-    error[3] = norm(difference_Phi_C, "fro") / sqrt(p / 1.0);
-    error[4] = norm(C - Cold, "fro") / sqrt(p / 1.0);
+    err[0] = norm(difference_Phi_R, "fro") / std::sqrt(double(p * K));
+    err[1] = norm(R - Rold,         "fro") / std::sqrt(double(p * K));
+    err[2] = norm(difference_Phi_C, "fro") / std::sqrt(double(p * K));
+    err[3] = norm(C - Cold,         "fro") / std::sqrt(double(p * K));
     
-    if(max(error) <= tol)
+    if (err.max() <= tol)
       break;
     Phi_old = Phi;
     Rold = R;
