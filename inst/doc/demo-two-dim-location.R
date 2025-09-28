@@ -12,7 +12,6 @@ library(SpatPCA)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-library(fields)
 library(scico)
 
 base_theme <- theme_minimal(base_size = 10, base_family = "Times") +
@@ -54,20 +53,18 @@ data.frame(
 realizations <- rnorm(n = n, sd = 3) %*% t(true_eigen_fn) + matrix(rnorm(n = n * p^2), n, p^2)
 
 ## ----out.width = '100%'-------------------------------------------------------
-original_par <- par()
-par(mar = c(3, 3, 1, 1), family = "Times")
-image.plot(
-  matrix(realizations[1, ], p, p),
-  main = "1st realization",
-  zlim = c(-10, 10),
-  col = coltab,
-  horizontal = TRUE,
-  cex.main = 0.8,
-  cex.axis = 0.5,
-  axis.args = list(cex.axis = 0.5),
-  legend.width = 0.5
+realization_df <- data.frame(
+  location_dim1 = expanded_location[, 1],
+  location_dim2 = expanded_location[, 2],
+  value = realizations[1, ]
 )
-par(original_par)
+
+ggplot(realization_df, aes(location_dim1, location_dim2)) +
+  geom_tile(aes(fill = value)) +
+  scale_fill_gradientn(colours = coltab, limits = c(-10, 10)) +
+  base_theme +
+  labs(title = "1st realization", fill = "") +
+  fill_bar
 
 ## -----------------------------------------------------------------------------
 tau2 <- c(0, exp(seq(log(10), log(400), length = 10)))
